@@ -9,11 +9,15 @@ pub struct Type {
 
 pub struct Relation {
     pub kind: String,
-    pub alias: Vec<Alias>,
-    pub from: String, // this seems to be an enum, need to read up.
+    pub aliases: Vec<Alias>,
 }
 
-pub enum Alias {
+pub struct Alias {
+    pub kind: AliasKind,
+    pub parent: Option<String>,
+}
+
+pub enum AliasKind {
     This,
     Named(String),
 }
