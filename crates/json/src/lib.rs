@@ -1,5 +1,5 @@
 use ast::*;
-use serde_json::{Map, Value, json};
+use serde_json::{json, Map, Value};
 
 pub struct JsonTransformer<'d> {
     doc: &'d Document,
@@ -54,7 +54,7 @@ fn parse_relations_obj(relations: &[Relation]) -> Map<String, Value> {
             let mut children = Vec::new();
             for alias in &rel.aliases {
                 let (key, obj) = parse_alias_obj(&alias);
-                let out = json!({key: obj});
+                let out = json!({ key: obj });
                 children.push(out);
             }
             let obj = json!({
@@ -69,24 +69,31 @@ fn parse_relations_obj(relations: &[Relation]) -> Map<String, Value> {
 }
 
 fn parse_alias_obj(alias: &Alias) -> (String, Value) {
-            match &alias.kind {
-                AliasKind::This => {
-                    ("this".into(), json!({}))
-                }
-                AliasKind::Named(name) => {
-                    match &alias.parent {
-                        Some(parent) => {
-                            unimplemented!()
-                        }
-                        None => {
-                            ("computedUserSet".into(), json!({
-                                "object": "",
-                                "relation": name
-                            }))
-                        }
+    match &alias.kind {
+        AliasKind::This => ("this".into(), json!({})),
+        AliasKind::Named(name) => match &alias.parent {
+            Some(parent) => (
+                "tupleToUserset".into(),
+                json!({
+                    "tupleset": {
+                        "object": "",
+                        "relation": parent
+                    },
+                    "computedUserset": {
+                        "object": "",
+                        "relation": name
                     }
-                }
-            }
+                }),
+            ),
+            None => (
+                "computedUserset".into(),
+                json!({
+                    "object": "",
+                    "relation": name
+                }),
+            ),
+        },
+    }
 }
 
 #[cfg(test)]
@@ -96,12 +103,10 @@ mod tests {
     #[test]
     fn basic_single_type() {
         let i = Document {
-            types: vec![
-                Type {
-                    kind: String::from("foo"),
-                    relations: Vec::new(),
-                }
-            ]
+            types: vec![Type {
+                kind: String::from("foo"),
+                relations: Vec::new(),
+            }],
         };
         let exp = json!({
             "type_definitions": [
@@ -117,17 +122,13 @@ mod tests {
 
     #[test]
     fn basic_self_relation() {
-        let i = vec![
-            Relation {
-                kind: "foo".into(),
-                aliases: vec![
-                    Alias {
-                        kind: AliasKind::This,
-                        parent: None,
-                    },
-                ],
-            },
-        ];
+        let i = vec![Relation {
+            kind: "foo".into(),
+            aliases: vec![Alias {
+                kind: AliasKind::This,
+                parent: None,
+            }],
+        }];
         let exp = json!({
             "foo": {
                 "this": {}
@@ -139,20 +140,16 @@ mod tests {
 
     #[test]
     fn basic_single_alias_relation() {
-        let i = vec![
-            Relation {
-                kind: "foo".into(),
-                aliases: vec![
-                    Alias {
-                        kind: AliasKind::Named("bar".into()),
-                        parent: None,
-                    },
-                ],
-            },
-        ];
+        let i = vec![Relation {
+            kind: "foo".into(),
+            aliases: vec![Alias {
+                kind: AliasKind::Named("bar".into()),
+                parent: None,
+            }],
+        }];
         let exp = json!({
             "foo": {
-                "computedUserSet": {
+                "computedUserset": {
                     "object": "",
                     "relation": "bar"
                 }
@@ -164,21 +161,19 @@ mod tests {
 
     #[test]
     fn self_plus_single_alias_relation() {
-        let i = vec![
-            Relation {
-                kind: "foo".into(),
-                aliases: vec![
-                    Alias {
-                        kind: AliasKind::This,
-                        parent: None,
-                    },
-                    Alias {
-                        kind: AliasKind::Named("bar".into()),
-                        parent: None,
-                    },
-                ],
-            },
-        ];
+        let i = vec![Relation {
+            kind: "foo".into(),
+            aliases: vec![
+                Alias {
+                    kind: AliasKind::This,
+                    parent: None,
+                },
+                Alias {
+                    kind: AliasKind::Named("bar".into()),
+                    parent: None,
+                },
+            ],
+        }];
         let exp = json!({
             "foo": {
                 "union": {
@@ -187,7 +182,7 @@ mod tests {
                             "this": {}
                         },
                         {
-                            "computedUserSet": {
+                            "computedUserset": {
                                 "object": "",
                                 "relation": "bar"
                             }
@@ -197,6 +192,122 @@ mod tests {
             }
         });
         let res = parse_relations_obj(&i);
+        assert_eq!(exp, json!(res));
+    }
+
+    #[test]
+    fn alias_relation_with_parent() {
+        let i = vec![Relation {
+            kind: "foo".into(),
+            aliases: vec![Alias {
+                kind: AliasKind::Named("bar".into()),
+                parent: Some("parent".into()),
+            }],
+        }];
+        let exp = json!({
+            "foo": {
+                "tupleToUserset": {
+                    "tupleset": {
+                        "object": "",
+                        "relation": "parent",
+                    },
+                    "computedUserset": {
+                        "object": "",
+                        "relation": "bar",
+                    }
+                }
+            }
+        });
+        let res = parse_relations_obj(&i);
+        assert_eq!(exp, json!(res));
+    }
+
+    #[test]
+    fn big_one() {
+        let i = Document {
+            types: vec![
+                Type {
+                    kind: "domain".into(),
+                    relations: vec![Relation {
+                        kind: "member".into(),
+                        aliases: vec![Alias {
+                            kind: AliasKind::This,
+                            parent: None,
+                        }],
+                    }],
+                },
+                Type {
+                    kind: "folder".into(),
+                    relations: vec![
+                        Relation {
+                            kind: "can_share".into(),
+                            aliases: vec![Alias {
+                                kind: AliasKind::Named("writer".into()),
+                                parent: None,
+                            }],
+                        },
+                        Relation {
+                            kind: "owner".into(),
+                            aliases: vec![
+                                Alias {
+                                    kind: AliasKind::This,
+                                    parent: None,
+                                },
+                                Alias {
+                                    kind: AliasKind::Named("owner".into()),
+                                    parent: Some("parent_folder".into()),
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        };
+
+        let exp = json!({
+            "type_definitions": [{
+                    "type": "domain",
+                    "relations": {
+                        "member": {
+                            "this": {}
+                        }
+                    }
+                },
+                {
+                    "type": "folder",
+                    "relations": {
+                        "can_share": {
+                            "computedUserset": {
+                                "object": "",
+                                "relation": "writer"
+                            }
+                        },
+                        "owner": {
+                            "union": {
+                                "child": [{
+                                        "this": {}
+                                    },
+                                    {
+                                        "tupleToUserset": {
+                                            "tupleset": {
+                                                "object": "",
+                                                "relation": "parent_folder"
+                                            },
+                                            "computedUserset": {
+                                                "object": "",
+                                                "relation": "owner"
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            ]
+        });
+
+        let res = JsonTransformer::new(&i).to_json_map();
         assert_eq!(exp, json!(res));
     }
 }
