@@ -3,12 +3,12 @@ pub struct Document {
 }
 
 pub struct Type {
-    pub name: String,
+    pub kind: String,
     pub relations: Vec<Relation>,
 }
 
 pub struct Relation {
-    pub name: String,
+    pub kind: String,
     pub alias: Vec<Alias>,
     pub from: String, // this seems to be an enum, need to read up.
 }
