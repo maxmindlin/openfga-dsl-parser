@@ -10,7 +10,7 @@ impl<'d> JsonTransformer<'d> {
         Self { doc }
     }
 
-    pub fn to_json(self) -> String {
+    pub fn serialize(self) -> String {
         let map = self.to_json_map();
         json!(map).to_string()
     }
@@ -22,7 +22,7 @@ impl<'d> JsonTransformer<'d> {
 
         // loop through types, adding to vecs
         for ty in &self.doc.types {
-            let type_obj = parse_type_obj(ty);
+            let type_obj = serialize_type_obj(ty);
             types.push(type_obj);
         }
 
@@ -31,29 +31,29 @@ impl<'d> JsonTransformer<'d> {
     }
 }
 
-fn parse_type_obj(ty: &Type) -> Map<String, Value> {
+fn serialize_type_obj(ty: &Type) -> Map<String, Value> {
     let mut type_obj = Map::new();
     type_obj.insert("type".into(), ty.kind.clone().into());
 
-    let relations_obj = parse_relations_obj(&ty.relations);
+    let relations_obj = serialize_relations_obj(&ty.relations);
     type_obj.insert("relations".into(), relations_obj.into());
     type_obj
 }
 
-fn parse_relations_obj(relations: &[Relation]) -> Map<String, Value> {
+fn serialize_relations_obj(relations: &[Relation]) -> Map<String, Value> {
     let mut rel_obj = Map::new();
     for rel in relations {
         if rel.aliases.len() <= 1 {
             let mut rel_content = Map::new();
             for alias in &rel.aliases {
-                let (key, obj) = parse_alias_obj(&alias);
+                let (key, obj) = serialize_alias_obj(&alias);
                 rel_content.insert(key, obj);
             }
             rel_obj.insert(rel.kind.clone().into(), json!(rel_content));
         } else {
             let mut children = Vec::new();
             for alias in &rel.aliases {
-                let (key, obj) = parse_alias_obj(&alias);
+                let (key, obj) = serialize_alias_obj(&alias);
                 let out = json!({ key: obj });
                 children.push(out);
             }
@@ -68,7 +68,7 @@ fn parse_relations_obj(relations: &[Relation]) -> Map<String, Value> {
     rel_obj
 }
 
-fn parse_alias_obj(alias: &Alias) -> (String, Value) {
+fn serialize_alias_obj(alias: &Alias) -> (String, Value) {
     match &alias.kind {
         AliasKind::This => ("this".into(), json!({})),
         AliasKind::Named(name) => match &alias.parent {
@@ -134,7 +134,7 @@ mod tests {
                 "this": {}
             }
         });
-        let res = parse_relations_obj(&i);
+        let res = serialize_relations_obj(&i);
         assert_eq!(exp, json!(res));
     }
 
@@ -155,7 +155,7 @@ mod tests {
                 }
             }
         });
-        let res = parse_relations_obj(&i);
+        let res = serialize_relations_obj(&i);
         assert_eq!(exp, json!(res));
     }
 
@@ -191,7 +191,7 @@ mod tests {
                 }
             }
         });
-        let res = parse_relations_obj(&i);
+        let res = serialize_relations_obj(&i);
         assert_eq!(exp, json!(res));
     }
 
@@ -218,7 +218,7 @@ mod tests {
                 }
             }
         });
-        let res = parse_relations_obj(&i);
+        let res = serialize_relations_obj(&i);
         assert_eq!(exp, json!(res));
     }
 
