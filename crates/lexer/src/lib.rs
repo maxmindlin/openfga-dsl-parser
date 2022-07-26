@@ -28,12 +28,13 @@ pub enum Token {
     #[token("but not")]
     Difference,
 
-    #[regex(r"[a-z_]+\sfrom\s[a-z_]+", priority = 2)]
+    // #[regex(r"[a-z_]+\sfrom\s[a-z_]+")]
+    #[token("from")]
     From,
 
     // // Or regular expressions.
-    // #[regex("[a-z_]+", priority = 1)]
-    // Text,
+    #[regex("[a-z_]+", priority = 1)]
+    Text,
 
     // #[token(" ")]
     // Space,
@@ -43,6 +44,6 @@ pub enum Token {
     #[error]
     // We can also use this variant to define whitespace,
     // or any other matches we wish to skip.
-    #[regex(r"[\s\t\n]+", logos::skip)]
+    #[regex(r"[ \t\n]+", logos::skip)]
     IsThisTheERROR,
 }

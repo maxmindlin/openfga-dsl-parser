@@ -2,7 +2,7 @@ use lexer::{Token};
 use logos::Logos;
 
 fn main() {
-    let mut lex = Token::lexer("type define viewer from owner\n");
+    let mut lex = Token::lexer(" type resource\n  relations\n    define page_viewer from owner\n");
 
     println!("{:?}", lex.next());
     println!("{:?}", lex.span());
