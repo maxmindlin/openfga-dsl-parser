@@ -45,5 +45,5 @@ pub enum Token {
     // We can also use this variant to define whitespace,
     // or any other matches we wish to skip.
     #[regex(r"[ \t\n]+", logos::skip)]
-    IsThisTheERROR,
+    Error,
 }
