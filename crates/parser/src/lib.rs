@@ -202,4 +202,62 @@ type org";
         let mut parser = Parser::new(lex);
         assert_eq!(Ok(exp), parser.parse_relation());
     }
+
+    #[test]
+    fn can_parse_doc() {
+        let i = "type organization
+  relations
+    define member as self
+type document
+  relations
+    define owner as self
+    define can_share as owner or editor or owner from parent";
+        let exp = Document {
+            types: vec![
+                Type {
+                    kind: "organization".into(),
+                    relations: vec![Relation {
+                        kind: "member".into(),
+                        aliases: vec![Alias {
+                            kind: AliasKind::This,
+                            parent: None,
+                        }],
+                    }],
+                },
+                Type {
+                    kind: "document".into(),
+                    relations: vec![
+                        Relation {
+                            kind: "owner".into(),
+                            aliases: vec![Alias {
+                                kind: AliasKind::This,
+                                parent: None,
+                            }],
+                        },
+                        Relation {
+                            kind: "can_share".into(),
+                            aliases: vec![
+                                Alias {
+                                    kind: AliasKind::Named("owner".into()),
+                                    parent: None,
+                                },
+                                Alias {
+                                    kind: AliasKind::Named("editor".into()),
+                                    parent: None,
+                                },
+                                Alias {
+                                    kind: AliasKind::Named("owner".into()),
+                                    parent: Some("parent".into()),
+                                },
+                            ],
+                        },
+                    ],
+                }
+            ],
+        };
+
+        let lex = Lexer::new(i);
+        let mut parser = Parser::new(lex);
+        assert_eq!(Ok(exp), parser.parse_document());
+    }
 }
