@@ -8,9 +8,12 @@ edition = "2021"
 members = [
 	"crates/ast",
 	"crates/json",
-	"crates/lexer"
+	"crates/lexer",
+	"crates/parser"
 ]
 
 [dependencies]
 lexer = { path = "crates/lexer" }
-logos = "0.12.1"
+parser = { path = "crates/parser" }
+json = { path = "crates/json" }
+ast = { path = "crates/ast" }
