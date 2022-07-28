@@ -1,4 +1,4 @@
-use ast::{Document, Type};
+use ast::{Document, Type, Relation, Alias, AliasKind};
 use lexer::{Lexer, token::{Token, TokenKind}};
 
 pub type ParseResult<T> = Result<T, ParserError>;
@@ -9,9 +9,10 @@ pub struct Parser {
     peek: Token,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum ParserError {
     UnexpectedToken(TokenKind, TokenKind),
+    UnexpectedKeyword(TokenKind),
 }
 
 impl Parser {
@@ -34,20 +35,57 @@ impl Parser {
         Ok(Document { types })
     }
 
-    pub fn parse_type(&mut self) -> ParseResult<Type> {
+    fn parse_type(&mut self) -> ParseResult<Type> {
         self.expect_peek(TokenKind::Text)?;
         let kind = self.curr.literal().to_string();
-        let relations = Vec::new();
+        let mut relations = Vec::new();
 
         if self.peek.kind() != TokenKind::EOF
             && self.peek.kind() != TokenKind::Type
         {
             self.expect_peek(TokenKind::Relations)?;
 
-            // parse relations
+            while self.peek.kind() == TokenKind::Define {
+                self.next_token();
+                let rel = self.parse_relation()?;
+                relations.push(rel);
+            }
         }
 
         Ok(Type { kind, relations })
+    }
+
+    fn parse_relation(&mut self) -> ParseResult<Relation> {
+        self.expect_peek(TokenKind::Text)?;
+        let kind = self.curr.literal().to_string();
+        self.next_token();
+        if self.curr.kind() != TokenKind::As {
+            // NOTE this might be invalid syntax...
+            return Ok(Relation { kind, aliases: Vec::new() });
+        }
+
+        self.next_token();
+        let mut aliases = Vec::new();
+        let first_alias = self.parse_alias()?;
+        aliases.push(first_alias);
+        while self.peek.kind() == TokenKind::Or {
+            self.next_token();
+            self.next_token();
+            let alias = self.parse_alias()?;
+            aliases.push(alias)
+        }
+
+        Ok(Relation { kind, aliases })
+    }
+
+    fn parse_alias(&mut self) -> ParseResult<Alias> {
+        let kind = match self.curr.kind() {
+            TokenKind::This => AliasKind::This,
+            TokenKind::Text => AliasKind::Named(self.curr.literal().to_string()),
+            _ => return Err(ParserError::UnexpectedKeyword(self.curr.kind())),
+        };
+
+        Ok(Alias { kind, parent: None })
     }
 
     fn next_token(&mut self) {
@@ -87,6 +125,48 @@ type org";
                 },
             ]
         };
-        assert_eq!(exp, parser.parse_document().unwrap());
+        assert_eq!(Ok(exp), parser.parse_document());
+    }
+
+    #[test]
+    fn can_parse_relation_self() {
+        let i = "define write as self";
+        let exp = Relation {
+            kind: "write".into(),
+            aliases: vec![Alias {
+                kind: AliasKind::This,
+                parent: None,
+            }],
+        };
+
+        let lex = Lexer::new(i);
+        let mut parser = Parser::new(lex);
+        assert_eq!(Ok(exp), parser.parse_relation());
+    }
+
+    #[test]
+    fn can_parse_relation_multiple_alias() {
+        let i = "define write as self or owner or thing";
+        let exp = Relation {
+            kind: "write".into(),
+            aliases: vec![
+                Alias {
+                    kind: AliasKind::This,
+                    parent: None,
+                },
+                Alias {
+                    kind: AliasKind::Named("owner".into()),
+                    parent: None,
+                },
+                Alias {
+                    kind: AliasKind::Named("thing".into()),
+                    parent: None,
+                }
+            ],
+        };
+
+        let lex = Lexer::new(i);
+        let mut parser = Parser::new(lex);
+        assert_eq!(Ok(exp), parser.parse_relation());
     }
 }
