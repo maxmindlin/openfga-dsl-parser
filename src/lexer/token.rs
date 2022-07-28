@@ -9,6 +9,8 @@ pub enum TokenKind {
     Or,
     And,
     From,
+    But,
+    Not,
 
     Text,
 
@@ -60,6 +62,8 @@ impl TokenKind {
             "or" => Some(Self::Or),
             "and" => Some(Self::And),
             "from" => Some(Self::From),
+            "but" => Some(Self::But),
+            "not" => Some(Self::Not),
             _ => None,
         }
     }

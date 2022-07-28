@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use crate::ast::{Alias, AliasKind, Document, Relation, Type};
 use crate::lexer::{
     token::{Token, TokenKind},
@@ -115,6 +117,17 @@ impl Parser {
             Ok(())
         } else {
             Err(ParserError::UnexpectedToken(expected, self.peek.kind()))
+        }
+    }
+}
+
+impl Display for ParserError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        use ParserError::*;
+        match self {
+            UnexpectedToken(exp, got) => write!(f, "Unexpected token: expected {exp:?}, got {got:?}"),
+            UnexpectedKeyword(got) => write!(f, "Unexpected keyword: {got:?}"),
+            UnexpectedEOF => write!(f, "received an unexpected EOF"),
         }
     }
 }
