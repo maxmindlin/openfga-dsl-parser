@@ -3,17 +3,5 @@ name = "openfga-dsl-parser"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-[workspace]
-members = [
-	"crates/ast",
-	"crates/json",
-	"crates/lexer",
-	"crates/parser"
-]
-
 [dependencies]
-lexer = { path = "crates/lexer" }
-parser = { path = "crates/parser" }
-json = { path = "crates/json" }
-ast = { path = "crates/ast" }
+serde_json = "1.0"

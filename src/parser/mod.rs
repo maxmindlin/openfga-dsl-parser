@@ -1,5 +1,5 @@
-use ast::{Alias, AliasKind, Document, Relation, Type};
-use lexer::{
+use crate::ast::{Alias, AliasKind, Document, Relation, Type};
+use crate::lexer::{
     token::{Token, TokenKind},
     Lexer,
 };

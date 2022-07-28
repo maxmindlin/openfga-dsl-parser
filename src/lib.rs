@@ -1,7 +1,7 @@
-pub use ast;
-pub use json;
-pub use lexer::*;
-pub use parser::*;
+pub mod ast;
+pub mod json;
+pub mod lexer;
+pub mod parser;
 
 #[cfg(test)]
 mod tests {
@@ -17,8 +17,8 @@ type document
     define owner as self
     define can_share as owner or editor or owner from parent";
 
-        let lex = Lexer::new(i);
-        let mut parser = Parser::new(lex);
+        let lex = lexer::Lexer::new(i);
+        let mut parser = parser::Parser::new(lex);
         let doc = parser.parse_document().unwrap();
 
         let jsont = json::JsonTransformer::new(&doc);
