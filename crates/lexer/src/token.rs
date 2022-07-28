@@ -39,6 +39,14 @@ impl Token {
             // span: Span { start, end },
         }
     }
+
+    pub fn literal(&self) -> &str {
+        &self.lit
+    }
+
+    pub fn kind(&self) -> TokenKind {
+        self.kind
+    }
 }
 
 impl TokenKind {
