@@ -1,5 +1,8 @@
-use ast::{Document, Type, Relation, Alias, AliasKind};
-use lexer::{Lexer, token::{Token, TokenKind}};
+use ast::{Alias, AliasKind, Document, Relation, Type};
+use lexer::{
+    token::{Token, TokenKind},
+    Lexer,
+};
 
 pub type ParseResult<T> = Result<T, ParserError>;
 
@@ -13,6 +16,7 @@ pub struct Parser {
 pub enum ParserError {
     UnexpectedToken(TokenKind, TokenKind),
     UnexpectedKeyword(TokenKind),
+    UnexpectedEOF,
 }
 
 impl Parser {
@@ -26,7 +30,10 @@ impl Parser {
         let mut types = Vec::new();
         while self.curr.kind() != TokenKind::EOF {
             if self.curr.kind() != TokenKind::Type {
-                return Err(ParserError::UnexpectedToken(TokenKind::Type, self.curr.kind()));
+                return Err(ParserError::UnexpectedToken(
+                    TokenKind::Type,
+                    self.curr.kind(),
+                ));
             }
             let ty = self.parse_type()?;
             types.push(ty);
@@ -40,9 +47,7 @@ impl Parser {
         let kind = self.curr.literal().to_string();
         let mut relations = Vec::new();
 
-        if self.peek.kind() != TokenKind::EOF
-            && self.peek.kind() != TokenKind::Type
-        {
+        if self.peek.kind() != TokenKind::EOF && self.peek.kind() != TokenKind::Type {
             self.expect_peek(TokenKind::Relations)?;
 
             while self.peek.kind() == TokenKind::Define {
@@ -61,7 +66,10 @@ impl Parser {
         self.next_token();
         if self.curr.kind() != TokenKind::As {
             // NOTE this might be invalid syntax...
-            return Ok(Relation { kind, aliases: Vec::new() });
+            return Ok(Relation {
+                kind,
+                aliases: Vec::new(),
+            });
         }
 
         self.next_token();
@@ -82,6 +90,7 @@ impl Parser {
         let kind = match self.curr.kind() {
             TokenKind::This => AliasKind::This,
             TokenKind::Text => AliasKind::Named(self.curr.literal().to_string()),
+            TokenKind::EOF => return Err(ParserError::UnexpectedEOF),
             _ => return Err(ParserError::UnexpectedKeyword(self.curr.kind())),
         };
 
@@ -130,7 +139,7 @@ type org";
                     kind: "org".into(),
                     relations: Vec::new(),
                 },
-            ]
+            ],
         };
         assert_eq!(Ok(exp), parser.parse_document());
     }
@@ -152,6 +161,26 @@ type org";
     }
 
     #[test]
+    fn error_eof_missing_relation_type() {
+        let i = "define write as";
+        let exp = Err(ParserError::UnexpectedEOF);
+
+        let lex = Lexer::new(i);
+        let mut parser = Parser::new(lex);
+        assert_eq!(exp, parser.parse_relation());
+    }
+
+    #[test]
+    fn error_expected_keyword_relation_type() {
+        let i = "define write as type";
+        let exp = Err(ParserError::UnexpectedKeyword(TokenKind::Type));
+
+        let lex = Lexer::new(i);
+        let mut parser = Parser::new(lex);
+        assert_eq!(exp, parser.parse_relation());
+    }
+
+    #[test]
     fn can_parse_relation_multiple_alias() {
         let i = "define write as self or owner or thing";
         let exp = Relation {
@@ -168,7 +197,7 @@ type org";
                 Alias {
                     kind: AliasKind::Named("thing".into()),
                     parent: None,
-                }
+                },
             ],
         };
 
@@ -252,7 +281,7 @@ type document
                             ],
                         },
                     ],
-                }
+                },
             ],
         };
 

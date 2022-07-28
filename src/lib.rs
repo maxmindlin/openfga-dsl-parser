@@ -1,6 +1,7 @@
+pub use ast;
+pub use json;
 pub use lexer::*;
 pub use parser::*;
-pub use json;
 
 #[cfg(test)]
 mod tests {
