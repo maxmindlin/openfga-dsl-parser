@@ -85,6 +85,13 @@ impl Parser {
             _ => return Err(ParserError::UnexpectedKeyword(self.curr.kind())),
         };
 
+        if self.peek.kind() == TokenKind::From {
+            self.next_token();
+            self.expect_peek(TokenKind::Text)?;
+            let parent = Some(self.curr.literal().to_string());
+            return Ok(Alias { kind, parent });
+        }
+
         Ok(Alias { kind, parent: None })
     }
 
@@ -162,6 +169,32 @@ type org";
                     kind: AliasKind::Named("thing".into()),
                     parent: None,
                 }
+            ],
+        };
+
+        let lex = Lexer::new(i);
+        let mut parser = Parser::new(lex);
+        assert_eq!(Ok(exp), parser.parse_relation());
+    }
+
+    #[test]
+    fn can_parse_relation_parent_alias() {
+        let i = "define write as self or owner from parent or thing";
+        let exp = Relation {
+            kind: "write".into(),
+            aliases: vec![
+                Alias {
+                    kind: AliasKind::This,
+                    parent: None,
+                },
+                Alias {
+                    kind: AliasKind::Named("owner".into()),
+                    parent: Some("parent".into()),
+                },
+                Alias {
+                    kind: AliasKind::Named("thing".into()),
+                    parent: None,
+                },
             ],
         };
 
