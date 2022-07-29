@@ -15,6 +15,8 @@ mod tests {
 type document
   relations
     define owner as self
+    define editor as self or owner
+    define parent as self
     define can_share as owner or editor or owner from parent";
 
         let lex = lexer::Lexer::new(i);
