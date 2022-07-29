@@ -22,7 +22,7 @@ impl Lexer {
             Some(c) => {
                 if c.is_whitespace() {
                     self.next_token()
-                } else if c.is_alphabetic() {
+                } else if is_valid_text(&c) {
                     let lit = self.read_text();
                     match TokenKind::is_to_keyword(&lit) {
                         Some(keyword) => Token::new(lit, keyword),
@@ -58,7 +58,7 @@ impl Lexer {
 }
 
 fn is_valid_text(c: &char) -> bool {
-    c.is_alphanumeric() || *c == '_'
+    c.is_alphanumeric() || *c == '_' || *c == '-'
 }
 
 // use logos::Logos;
