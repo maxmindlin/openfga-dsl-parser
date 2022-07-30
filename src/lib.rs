@@ -14,10 +14,10 @@ mod tests {
     define member as self
 type document
   relations
-    define owner as self
-    define editor as self or owner
-    define parent as self
-    define can_share as owner or editor or owner from parent";
+    define 0af-doc_owner as self
+    define _editor as self or 0af-doc_owner
+    define -parent as self
+    define can_share as 0af-doc_owner or _editor or 0af-doc_owner from -parent";
 
         let lex = lexer::Lexer::new(i);
         let mut parser = parser::Parser::new(lex);

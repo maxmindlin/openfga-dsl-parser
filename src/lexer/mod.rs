@@ -22,7 +22,7 @@ impl Lexer {
             Some(c) => {
                 if c.is_whitespace() {
                     self.next_token()
-                } else if c.is_alphabetic() {
+                } else if is_valid_text(&c) {
                     let lit = self.read_text();
                     match TokenKind::is_to_keyword(&lit) {
                         Some(keyword) => Token::new(lit, keyword),
@@ -58,7 +58,7 @@ impl Lexer {
 }
 
 fn is_valid_text(c: &char) -> bool {
-    c.is_alphanumeric() || *c == '_'
+    c.is_alphanumeric() || *c == '_' || *c == '-'
 }
 
 // use logos::Logos;
@@ -144,7 +144,10 @@ mod tests {
     fn full() {
         let i = "type document
     relations
-        define parent as self or thing or other_thing from parent";
+        define parent as self or thing or other_thing from parent
+        define -owner as self
+        define _viewer as self
+        define 0reader as self";
 
         let mut l = Lexer::new(i);
         assert_eq!(l.next_token(), Token::new("type".into(), TokenKind::Type));
@@ -172,6 +175,34 @@ mod tests {
         );
         assert_eq!(l.next_token(), Token::new("from".into(), TokenKind::From));
         assert_eq!(l.next_token(), Token::new("parent".into(), TokenKind::Text));
+        assert_eq!(
+            l.next_token(),
+            Token::new("define".into(), TokenKind::Define)
+        );
+        assert_eq!(l.next_token(), Token::new("-owner".into(), TokenKind::Text));
+        assert_eq!(l.next_token(), Token::new("as".into(), TokenKind::As));
+        assert_eq!(l.next_token(), Token::new("self".into(), TokenKind::This));
+        assert_eq!(
+            l.next_token(),
+            Token::new("define".into(), TokenKind::Define)
+        );
+        assert_eq!(
+            l.next_token(),
+            Token::new("_viewer".into(), TokenKind::Text)
+        );
+        assert_eq!(l.next_token(), Token::new("as".into(), TokenKind::As));
+        assert_eq!(l.next_token(), Token::new("self".into(), TokenKind::This));
+        assert_eq!(
+            l.next_token(),
+            Token::new("define".into(), TokenKind::Define)
+        );
+        assert_eq!(
+            l.next_token(),
+            Token::new("0reader".into(), TokenKind::Text)
+        );
+        assert_eq!(l.next_token(), Token::new("as".into(), TokenKind::As));
+        assert_eq!(l.next_token(), Token::new("self".into(), TokenKind::This));
+
         assert_eq!(l.next_token(), Token::new("".into(), TokenKind::EOF));
     }
 }
