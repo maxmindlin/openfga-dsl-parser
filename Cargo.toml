@@ -7,7 +7,7 @@ license = "Apache-2.0 license"
 description = "Parsing and JSON transformer for the OpenFGA authorization DSL"
 readme = "README.md"
 repository = "https://github.com/maxmindlin/openfga-dsl-parser"
-keywords = ["parser", "openfga", "dsl", "json", "library", "transformer"]
+keywords = ["parser", "openfga", "dsl", "json", "transformer"]
 
 [dependencies]
 serde_json = "1.0"
