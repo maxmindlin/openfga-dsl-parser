@@ -25,4 +25,5 @@ pub struct Alias {
 pub enum AliasKind {
     This,
     Named(String),
+    Negative(String),
 }

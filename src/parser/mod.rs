@@ -78,10 +78,17 @@ impl Parser {
         let mut aliases = Vec::new();
         let first_alias = self.parse_alias()?;
         aliases.push(first_alias);
-        while self.peek.kind() == TokenKind::Or {
-            self.next_token();
-            self.next_token();
-            let alias = self.parse_alias()?;
+        while self.peek.kind() == TokenKind::Or
+            || self.peek.kind() == TokenKind::But
+        {
+            let alias = if self.peek.kind() == TokenKind::But {
+                self.next_token();
+                self.parse_but_not()?
+            } else {
+                self.next_token();
+                self.next_token();
+                self.parse_alias()?
+            };
             aliases.push(alias)
         }
 
@@ -89,12 +96,31 @@ impl Parser {
     }
 
     fn parse_alias(&mut self) -> ParseResult<Alias> {
-        let kind = match self.curr.kind() {
-            TokenKind::This => AliasKind::This,
-            TokenKind::Text => AliasKind::Named(self.curr.literal().to_string()),
-            TokenKind::EOF => return Err(ParserError::UnexpectedEOF),
-            _ => return Err(ParserError::UnexpectedKeyword(self.curr.kind())),
+        let kind = if self.curr.kind() == TokenKind::But {
+            unimplemented!()
+        } else {
+            match self.curr.kind() {
+                TokenKind::This => AliasKind::This,
+                TokenKind::Text => AliasKind::Named(self.curr.literal().to_string()),
+                TokenKind::EOF => return Err(ParserError::UnexpectedEOF),
+                _ => return Err(ParserError::UnexpectedKeyword(self.curr.kind())),
+            }
         };
+
+        if self.peek.kind() == TokenKind::From {
+            self.next_token();
+            self.expect_peek(TokenKind::Text)?;
+            let parent = Some(self.curr.literal().to_string());
+            return Ok(Alias { kind, parent });
+        }
+
+        Ok(Alias { kind, parent: None })
+    }
+
+    fn parse_but_not(&mut self) -> ParseResult<Alias> {
+        self.expect_peek(TokenKind::Not)?;
+        self.expect_peek(TokenKind::Text)?;
+        let kind = AliasKind::Negative(self.curr.literal().to_string());
 
         if self.peek.kind() == TokenKind::From {
             self.next_token();
@@ -166,6 +192,28 @@ type org";
                 kind: AliasKind::This,
                 parent: None,
             }],
+        };
+
+        let lex = Lexer::new(i);
+        let mut parser = Parser::new(lex);
+        assert_eq!(Ok(exp), parser.parse_relation());
+    }
+
+    #[test]
+    fn can_parse_but_not_alias() {
+        let i = "define write as self but not owner from parent";
+        let exp = Relation {
+            kind: "write".into(),
+            aliases: vec![
+                Alias {
+                    kind: AliasKind::This,
+                    parent: None,
+                },
+                Alias {
+                    kind: AliasKind::Negative("owner".into()),
+                    parent: Some("parent".into()),
+                },
+            ],
         };
 
         let lex = Lexer::new(i);
