@@ -6,6 +6,7 @@ use crate::lexer::{
     Lexer,
 };
 
+/// Result type for the [Parser](crate::parser::Parser) type.
 pub type ParseResult<T> = Result<T, ParserError>;
 
 pub struct Parser {
@@ -22,7 +23,14 @@ pub enum ParserError {
 }
 
 impl Parser {
-    pub fn new(mut lex: Lexer) -> Self {
+    pub fn new(input: &str) -> Self {
+        let mut lex = Lexer::new(input);
+        let curr = lex.next_token();
+        let peek = lex.next_token();
+        Self { lex, curr, peek }
+    }
+
+    pub fn from_lexer(mut lex: Lexer) -> Self {
         let curr = lex.next_token();
         let peek = lex.next_token();
         Self { lex, curr, peek }
@@ -162,7 +170,7 @@ mod tests {
         let i = "type document
 type org";
         let lex = Lexer::new(i);
-        let mut parser = Parser::new(lex);
+        let mut parser = Parser::from_lexer(lex);
         let exp = Document {
             types: vec![
                 Type {
@@ -190,7 +198,7 @@ type org";
         };
 
         let lex = Lexer::new(i);
-        let mut parser = Parser::new(lex);
+        let mut parser = Parser::from_lexer(lex);
         assert_eq!(Ok(exp), parser.parse_relation());
     }
 
@@ -212,7 +220,7 @@ type org";
         };
 
         let lex = Lexer::new(i);
-        let mut parser = Parser::new(lex);
+        let mut parser = Parser::from_lexer(lex);
         assert_eq!(Ok(exp), parser.parse_relation());
     }
 
@@ -222,7 +230,7 @@ type org";
         let exp = Err(ParserError::UnexpectedEOF);
 
         let lex = Lexer::new(i);
-        let mut parser = Parser::new(lex);
+        let mut parser = Parser::from_lexer(lex);
         assert_eq!(exp, parser.parse_relation());
     }
 
@@ -232,7 +240,7 @@ type org";
         let exp = Err(ParserError::UnexpectedKeyword(TokenKind::Type));
 
         let lex = Lexer::new(i);
-        let mut parser = Parser::new(lex);
+        let mut parser = Parser::from_lexer(lex);
         assert_eq!(exp, parser.parse_relation());
     }
 
@@ -258,7 +266,7 @@ type org";
         };
 
         let lex = Lexer::new(i);
-        let mut parser = Parser::new(lex);
+        let mut parser = Parser::from_lexer(lex);
         assert_eq!(Ok(exp), parser.parse_relation());
     }
 
@@ -284,7 +292,7 @@ type org";
         };
 
         let lex = Lexer::new(i);
-        let mut parser = Parser::new(lex);
+        let mut parser = Parser::from_lexer(lex);
         assert_eq!(Ok(exp), parser.parse_relation());
     }
 
@@ -342,7 +350,7 @@ type document
         };
 
         let lex = Lexer::new(i);
-        let mut parser = Parser::new(lex);
+        let mut parser = Parser::from_lexer(lex);
         assert_eq!(Ok(exp), parser.parse_document());
     }
 }
