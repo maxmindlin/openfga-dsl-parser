@@ -1,7 +1,7 @@
 # OpenFGA DSL Parser
 
-[![Telegraf crate](https://img.shields.io/crates/v/telegraf.svg)](https://crates.io/crates/openfga-dsl-parser)
-[![Telegraf documentation](https://docs.rs/telegraf/badge.svg)](https://docs.rs/openfga-dsl-parser)
+[![Openfga-dsl-parser crate](https://img.shields.io/crates/v/openfga-dsl-parser.svg)](https://crates.io/crates/openfga-dsl-parser)
+[![Openfga-dsl-parser documentation](https://docs.rs/openfga-dsl-parser/badge.svg)](https://docs.rs/openfga-dsl-parser)
 
 The OpenFGA DSL Parser provides utilities for parsing DSL file string inputs into an AST representation, as well as transforming them into a JSON representation.
 
