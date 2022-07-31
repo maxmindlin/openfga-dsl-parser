@@ -2,7 +2,7 @@
 
 The OpenFGA DSL Parser provides utilities for parsing DSL file string inputs into an AST representation, as well as transforming them into a JSON representation.
 
-This library is meant to be a utility for services using [OpenFGA](https://openfga.dev/) for their authorization solution, but need a way to translate from their DSL to the JSON format the HTTP API expects. A [Typescript library](https://github.com/openfga/syntax-transformer) is available that does something similar, however library this aims to target Rust as well as be a base for other potential languages to bind to.
+This library is meant to be a utility for services using [OpenFGA](https://openfga.dev/) for their authorization solution, but need a way to translate from their DSL to the JSON format the HTTP API expects. A [Typescript library](https://github.com/openfga/syntax-transformer) is available that does something similar, however this library aims to target Rust as well as be a base for other potential languages to bind to.
 
 # Usage
 
