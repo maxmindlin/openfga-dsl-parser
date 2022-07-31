@@ -71,6 +71,20 @@ fn serialize_relations_obj(relations: &[Relation]) -> Map<String, Value> {
 fn serialize_alias_obj(alias: &Alias) -> (String, Value) {
     match &alias.kind {
         AliasKind::This => ("this".into(), json!({})),
+        AliasKind::Negative(not) => (
+            "difference".into(),
+            json!({
+                "base": {
+                    "this": {}
+                },
+                "subtract": {
+                    "computedUserset": {
+                        "object": "",
+                        "relation": not
+                    }
+                }
+            }),
+        ),
         AliasKind::Named(name) => match &alias.parent {
             Some(parent) => (
                 "tupleToUserset".into(),

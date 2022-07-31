@@ -78,10 +78,15 @@ impl Parser {
         let mut aliases = Vec::new();
         let first_alias = self.parse_alias()?;
         aliases.push(first_alias);
-        while self.peek.kind() == TokenKind::Or {
-            self.next_token();
-            self.next_token();
-            let alias = self.parse_alias()?;
+        while self.peek.kind() == TokenKind::Or || self.peek.kind() == TokenKind::But {
+            let alias = if self.peek.kind() == TokenKind::But {
+                self.next_token();
+                self.parse_but_not()?
+            } else {
+                self.next_token();
+                self.next_token();
+                self.parse_alias()?
+            };
             aliases.push(alias)
         }
 
@@ -96,14 +101,28 @@ impl Parser {
             _ => return Err(ParserError::UnexpectedKeyword(self.curr.kind())),
         };
 
+        let parent = self.parse_alias_parent()?;
+        Ok(Alias { kind, parent })
+    }
+
+    fn parse_but_not(&mut self) -> ParseResult<Alias> {
+        self.expect_peek(TokenKind::Not)?;
+        self.expect_peek(TokenKind::Text)?;
+        let kind = AliasKind::Negative(self.curr.literal().to_string());
+        let parent = self.parse_alias_parent()?;
+
+        Ok(Alias { kind, parent })
+    }
+
+    fn parse_alias_parent(&mut self) -> ParseResult<Option<String>> {
         if self.peek.kind() == TokenKind::From {
             self.next_token();
             self.expect_peek(TokenKind::Text)?;
             let parent = Some(self.curr.literal().to_string());
-            return Ok(Alias { kind, parent });
+            Ok(parent)
+        } else {
+            Ok(None)
         }
-
-        Ok(Alias { kind, parent: None })
     }
 
     fn next_token(&mut self) {
@@ -168,6 +187,28 @@ type org";
                 kind: AliasKind::This,
                 parent: None,
             }],
+        };
+
+        let lex = Lexer::new(i);
+        let mut parser = Parser::new(lex);
+        assert_eq!(Ok(exp), parser.parse_relation());
+    }
+
+    #[test]
+    fn can_parse_but_not_alias() {
+        let i = "define write as self but not owner from parent";
+        let exp = Relation {
+            kind: "write".into(),
+            aliases: vec![
+                Alias {
+                    kind: AliasKind::This,
+                    parent: None,
+                },
+                Alias {
+                    kind: AliasKind::Negative("owner".into()),
+                    parent: Some("parent".into()),
+                },
+            ],
         };
 
         let lex = Lexer::new(i);
