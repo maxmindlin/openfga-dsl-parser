@@ -6,8 +6,7 @@ This library is meant to be a utility for services using [OpenFGA](https://openf
 
 # Usage
 
-```
-# fn parse() -> openfga_dsl_parser::ParseResult<()> {
+```rust
 use openfga_dsl_parser::{json, Parser};
 
 let input = "type group
@@ -22,5 +21,4 @@ let mut parser = Parser::new(input);
 let doc = parser.parse_document()?;
 
 let json = json::JsonTransformer::new(&doc).serialize();
-# }
 ```
