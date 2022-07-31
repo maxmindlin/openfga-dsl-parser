@@ -96,40 +96,35 @@ impl Parser {
     }
 
     fn parse_alias(&mut self) -> ParseResult<Alias> {
-        let kind = if self.curr.kind() == TokenKind::But {
-            unimplemented!()
-        } else {
-            match self.curr.kind() {
-                TokenKind::This => AliasKind::This,
-                TokenKind::Text => AliasKind::Named(self.curr.literal().to_string()),
-                TokenKind::EOF => return Err(ParserError::UnexpectedEOF),
-                _ => return Err(ParserError::UnexpectedKeyword(self.curr.kind())),
-            }
+        let kind = match self.curr.kind() {
+            TokenKind::This => AliasKind::This,
+            TokenKind::Text => AliasKind::Named(self.curr.literal().to_string()),
+            TokenKind::EOF => return Err(ParserError::UnexpectedEOF),
+            _ => return Err(ParserError::UnexpectedKeyword(self.curr.kind())),
         };
 
-        if self.peek.kind() == TokenKind::From {
-            self.next_token();
-            self.expect_peek(TokenKind::Text)?;
-            let parent = Some(self.curr.literal().to_string());
-            return Ok(Alias { kind, parent });
-        }
-
-        Ok(Alias { kind, parent: None })
+        let parent = self.parse_alias_parent()?;
+        Ok(Alias { kind, parent })
     }
 
     fn parse_but_not(&mut self) -> ParseResult<Alias> {
         self.expect_peek(TokenKind::Not)?;
         self.expect_peek(TokenKind::Text)?;
         let kind = AliasKind::Negative(self.curr.literal().to_string());
+        let parent = self.parse_alias_parent()?;
 
+        Ok(Alias { kind, parent })
+    }
+
+    fn parse_alias_parent(&mut self) -> ParseResult<Option<String>> {
         if self.peek.kind() == TokenKind::From {
             self.next_token();
             self.expect_peek(TokenKind::Text)?;
             let parent = Some(self.curr.literal().to_string());
-            return Ok(Alias { kind, parent });
+            Ok(parent)
+        } else {
+            Ok(None)
         }
-
-        Ok(Alias { kind, parent: None })
     }
 
     fn next_token(&mut self) {
