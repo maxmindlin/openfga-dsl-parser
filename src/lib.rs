@@ -22,6 +22,7 @@
 //! let doc = parser.parse_document()?;
 //!
 //! let json = json::JsonTransformer::new(&doc).serialize();
+//! # Ok(())
 //! # }
 //! ```
 
