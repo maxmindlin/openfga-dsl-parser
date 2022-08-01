@@ -1,6 +1,8 @@
 use crate::ast::*;
 use serde_json::{json, Map, Value};
 
+/// Transformer type for turning [Documents](crate::ast::Document)
+/// into JSON.
 pub struct JsonTransformer<'d> {
     doc: &'d Document,
 }
@@ -10,6 +12,7 @@ impl<'d> JsonTransformer<'d> {
         Self { doc }
     }
 
+    /// Transforms the document into a JSON string.
     pub fn serialize(self) -> String {
         let map = self.to_json_map();
         json!(map).to_string()

@@ -1,3 +1,6 @@
+/// Root node for the DSL AST.
+/// Contains any number of [Type](crate::ast::Type)
+/// nodes.
 #[derive(Debug, PartialEq, Eq)]
 pub struct Document {
     pub types: Vec<Type>,

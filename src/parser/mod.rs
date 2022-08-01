@@ -6,15 +6,18 @@ use crate::lexer::{
     Lexer,
 };
 
-/// Result type for the [Parser](crate::parser::Parser) type.
+/// Result type for the [Parser](crate::Parser) type.
 pub type ParseResult<T> = Result<T, ParserError>;
 
+/// Main parser struct for parsing DSL strings
+/// into an AST representation.
 pub struct Parser {
     lex: Lexer,
     curr: Token,
     peek: Token,
 }
 
+/// Enumerated error type for the [Parser](crate::Parser) type.
 #[derive(Debug, PartialEq, Eq)]
 pub enum ParserError {
     UnexpectedToken(TokenKind, TokenKind),
@@ -23,6 +26,7 @@ pub enum ParserError {
 }
 
 impl Parser {
+    /// Create a new [Parser](crate::Parser) type.
     pub fn new(input: &str) -> Self {
         let mut lex = Lexer::new(input);
         let curr = lex.next_token();
@@ -30,12 +34,16 @@ impl Parser {
         Self { lex, curr, peek }
     }
 
+    /// Create a new [Parser](crate::Parser) type with
+    /// a provided lexer instead of creating one.
     pub fn from_lexer(mut lex: Lexer) -> Self {
         let curr = lex.next_token();
         let peek = lex.next_token();
         Self { lex, curr, peek }
     }
 
+    /// Transforms the input string provided at instantiation
+    /// into a [Document](crate::ast::Document).
     pub fn parse_document(&mut self) -> ParseResult<Document> {
         let mut types = Vec::new();
         while self.curr.kind() != TokenKind::EOF {
